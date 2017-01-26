@@ -7576,8 +7576,8 @@ var steelseries = (function () {
             lcdTitleStrings = (undefined === parameters.lcdTitleStrings ? ['Latest', 'Average'] : parameters.lcdTitleStrings),
             titleString = (undefined === parameters.titleString ? '' : parameters.titleString),
             useColorLabels = (undefined === parameters.useColorLabels ? false : parameters.useColorLabels),
-            fullScaleDeflectionTime = (undefined === parameters.fullScaleDeflectionTime ? 2.5 : parameters.fullScaleDeflectionTime);
-
+            fullScaleDeflectionTime = (undefined === parameters.fullScaleDeflectionTime ? 2.5 : parameters.fullScaleDeflectionTime),
+	    windspeed = (undefined === parameters.windspeed ? false : parameters.windspeed);
         var tweenLatest;
         var tweenAverage;
         var valueLatest = 0;
@@ -7644,26 +7644,37 @@ var steelseries = (function () {
             mainCtx.textAlign = 'center';
             mainCtx.strokeStyle = lcdColor.textColor;
             mainCtx.fillStyle = lcdColor.textColor;
-
+		
+	    var myoriginalvalue = value;
+		
             //convert value from -180,180 range into 0-360 range
             while (value < -180) {
                 value += 360;
-            }
-            if (!degreeScaleHalf && value < 0) {
-                value += 360;
-            }
+	            }
+	            if (!degreeScaleHalf && value < 0) {
+	                value += 360;
+	            }
 
-            if (degreeScaleHalf && value > 180) {
-                value = -(360 - value);
-            }
+	            if (degreeScaleHalf && value > 180) {
+	                value = -(360 - value);
+	            }
 
-            if (value >= 0) {
-                value = '00' + Math.round(value);
-                value = value.substring(value.length, value.length - 3);
-            } else {
-                value = '00' + Math.abs(Math.round(value));
-                value = '-' + value.substring(value.length, value.length - 3);
-            }
+	            if (value >= 0) {
+	                value = '00' + Math.round(value);
+	                value = value.substring(value.length, value.length - 3);
+	            } else {
+	                value = '00' + Math.abs(Math.round(value));
+		    if (windspeed){
+	                value = value.substring(value.length, value.length - 3);
+			}else{
+	                value = '-' + value.substring(value.length, value.length - 3);
+	            	}
+	            }
+
+	    if ((windspeed) && (!bLatest)){
+		// when its windspeed and not the wind value
+		value = myoriginalvalue.toFixed(1);
+	    }
 
             if (lcdColor === steelseries.LcdColor.STANDARD || lcdColor === steelseries.LcdColor.STANDARD_GREEN) {
                 mainCtx.shadowColor = 'gray';
@@ -7672,7 +7683,11 @@ var steelseries = (function () {
                 mainCtx.shadowBlur = imageWidth * 0.007;
             }
             mainCtx.font = (digitalFont ? lcdFont : stdFont);
-            mainCtx.fillText(value + '\u00B0', imageWidth / 2 + lcdWidth * 0.05, (bLatest ? lcdPosY1 : lcdPosY2) + lcdHeight * 0.5 + lcdFontHeight * 0.38, lcdWidth * 0.9);
+            var dispdegrees = '\u00B0';
+	    if (windspeed){
+		dispdegrees = ''
+	    }
+            mainCtx.fillText(value + dispdegrees, imageWidth / 2 + lcdWidth * 0.05, (bLatest ? lcdPosY1 : lcdPosY2) + lcdHeight * 0.5 + lcdFontHeight * 0.38, lcdWidth * 0.9);
 
             mainCtx.restore();
         };
@@ -12604,6 +12619,25 @@ var steelseries = (function () {
                 ptrCtx.fill();
                 break;
 
+	    case 'type17':
+                // POINTER_TYPE17
+                ptrCtx.beginPath();
+                //ptrCtx.moveTo(0.5 * size, 0.168224 * size);
+                //ptrCtx.lineTo(0.485981 * size, 0.5 * size);
+                //ptrCtx.lineTo(0.5 * size, 0.504672 * size);
+                //ptrCtx.lineTo(0.509345 * size, 0.5 * size);
+                //ptrCtx.lineTo(0.5 * size, 0.168224 * size);
+                ptrCtx.closePath();
+                grad = ptrCtx.createLinearGradient(0, 0.168224 * size, 0, 0.504672 * size);
+                grad.addColorStop(0, ptrColor.medium.getRgbaColor());
+                grad.addColorStop(1, ptrColor.dark.getRgbaColor());
+                ptrCtx.fillStyle = grad;
+                ptrCtx.strokeStyle = ptrColor.dark.getRgbaColor();
+                ptrCtx.fill();
+                ptrCtx.stroke();
+                break;
+//JRAM
+
             case 'type1':
             /* falls through */
             default:
@@ -15745,9 +15779,10 @@ var steelseries = (function () {
         TYPE13: new PointerTypeDef('type13'),
         TYPE14: new PointerTypeDef('type14'),
         TYPE15: new PointerTypeDef('type15'),
-        TYPE16: new PointerTypeDef('type16')
+        TYPE16: new PointerTypeDef('type16'),
+	TYPE17: new PointerTypeDef('type17')
     };
-
+//JRAM
     var foregroundType = {
         TYPE1: new ForegroundTypeDef('type1'),
         TYPE2: new ForegroundTypeDef('type2'),
